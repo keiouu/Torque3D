@@ -408,7 +408,7 @@ void TerrainDetailMapFeatHLSL::processPix(   Vector<ShaderComponent*> &component
    }
 
    // Add to the blend total.
-   meta->addStatement( new GenOp( "   @ = max( @, @ );\r\n", blendTotal, blendTotal, detailBlend ) );
+   meta->addStatement( new GenOp( "   @ = saturate( @ + @ );\r\n", blendTotal, blendTotal, detailBlend ) );
 
    // If we had a parallax feature... then factor in the parallax
    // amount so that it fades out with the layer blending.
@@ -480,12 +480,12 @@ void TerrainDetailMapFeatHLSL::processPix(   Vector<ShaderComponent*> &component
    //
    if ( fd.features.hasFeature( MFT_TerrainSideProject, detailIndex ) )
    {
-      meta->addStatement( new GenOp( "      @ = ( lerp( tex2D( @, @.yz ), tex2D( @, @.xz ), @.z ) * 2.0 ) - 1.0;\r\n", 
+      meta->addStatement( new GenOp( "      @ = lerp( tex2D( @, @.yz ), tex2D( @, @.xz ), @.z );\r\n", 
                                                 detailColor, detailMap, inDet, detailMap, inDet, inTex ) );
    }
    else
    {
-      meta->addStatement( new GenOp( "      @ = ( tex2D( @, @.xy ) * 2.0 ) - 1.0;\r\n", 
+      meta->addStatement( new GenOp( "      @ = tex2D( @, @.xy );\r\n", 
                                        detailColor, detailMap, inDet ) );
    }
 
@@ -495,7 +495,7 @@ void TerrainDetailMapFeatHLSL::processPix(   Vector<ShaderComponent*> &component
    Var *baseColor = (Var*)LangElement::find( "baseColor" );
    Var *outColor = (Var*)LangElement::find( "col" );
 
-   meta->addStatement( new GenOp( "      @ = lerp( @, @ + @, @ );\r\n",
+   meta->addStatement( new GenOp( "      @ = lerp( @, ( @ + @ ) * 0.5, @ );\r\n",
                                     outColor, outColor, baseColor, detailColor, detailBlend ) );
 
    meta->addStatement( new GenOp( "   }\r\n" ) );
@@ -705,7 +705,6 @@ void TerrainAdditiveFeatHLSL::processPix( Vector<ShaderComponent*> &componentLis
    
    MultiLine *meta = new MultiLine;
 
-   meta->addStatement( new GenOp( "   clip( @ - 0.0001 );\r\n", blendTotal ) );
    meta->addStatement( new GenOp( "   @.a = @;\r\n", color, blendTotal ) );
 
    output = meta;
